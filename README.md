@@ -78,13 +78,26 @@ Now it is time to explain you each file's role:
 
 ## Build and test :  First task answer
 - this work was achieved in virtual machine docker (predefined in this bootcamps)
-- after cloning the project , I proceed to write the dockerfile : [My dockerfile](https://github.com/mintoug/projet1_docker/blob/master/simple_api/Dockerfile"My dockerfile")
+- after cloning the project , I proceed to write the dockerfile :
+[My-dockerfile](https://github.com/mintoug/projet1_docker/blob/master/simple_api/Dockerfile "My dockerfile")
+
+```sh
+FROM "python:2.7-stretch"
+MAINTAINER anissa
+ADD student_age.py /
+RUN apt-get update -y && apt-get install python-dev python3-dev libsasl2-dev python-dev libldap2-dev libssl-dev -y
+RUN pip install flask==1.1.2 flask_httpauth==4.1.0 flask_simpleldap python-dotenv==0.14.0
+VOLUME /data
+EXPOSE 5000
+CMD [ "python", "./student_age.py" ]
+```
+
 to build the image I use the command line
 `docker build -t api-student:v1 .`
 next I deploy the first container `docker run -d -v ${pwd}/student_age.json:/data/student_age.json -p 4000:5000 --name test-list api-student:v1`
 to test I use `curl -u toto:python -X GET http://127.0.0.1:3000/pozos/api/v1.0/get_student_ages`
 the result is ✨✨
-![](https://github.com/mintoug/projet-1....jpg)
+![](https://github.com/mintoug/projet1_docker/blob/master/assets/deploy_api.png)
 
 
 # Infrastructure As Code : Second task answer
@@ -107,7 +120,8 @@ As asked The ***docker-compose.yml*** file will deploy two services :
    - port: don't forget to expose the port
 
 my docker-compose.yml is 
-`version: '2'
+```sh
+version: '2'
 services:
   website:
     image: php:apache
@@ -131,9 +145,15 @@ services:
     networks:
       - api_pozos
 networks:
-  api_pozos:`   
+  api_pozos:
+  ```   
 
-I Rrun your docker-compose.yml `docker-compose up `
+I Run my docker-compose.yml 
+with the ip of my machine in port 3001 i can see my websie , changing some information about url and port is needed in index.php before.
+
+we have then : 
+![](https://github.com/mintoug/projet1_docker/blob/master/assets/website_UI.png)
+
 
 
 
@@ -154,6 +174,8 @@ next the tag  `docker image tag api-student:v1 localhost:5000/api-student:v1`
 next pushing the image to the container registry-pozos `docker push localhost:5000/api-student:v1`
 
 for the UI I use 
-`docker run -d --name registry_anissa_ui --network student-list_api_pozos -p 4002:80 -e REGISTRY_TITLE="registry pozos" -e REGISTRY_URL="http://registry-pozos:5000" joxit/docker-registry-ui:static`
+```sh
+docker run -d --name registry_anissa_ui --network student-list_api_pozos -p 4002:80 -e REGISTRY_TITLE="registry pozos" -e REGISTRY_URL="http://registry-pozos:5000" joxit/docker-registry-ui:static
+```
 
 
