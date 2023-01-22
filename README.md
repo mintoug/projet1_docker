@@ -76,58 +76,23 @@ Now it is time to explain you each file's role:
 
 
 
-## Build and test (7 points)
+## Build and test :  First task answer
+- this work was achieved in virtual machine docker (predefined in this bootcamps)
+- after cloning the project , I proceed to write the dockerfile : [My dockerfile](https://github.com/mintoug/projet1_docker/blob/master/simple_api/Dockerfile"My dockerfile")
+to build the image I use the command line
+`docker build -t api-student:v1 .`
+next I deploy the first container `docker run -d -v ${pwd}/student_age.json:/data/student_age.json -p 4000:5000 --name test-list api-student:v1`
+to test I use `curl -u toto:python -X GET http://127.0.0.1:3000/pozos/api/v1.0/get_student_ages`
+the result is ✨✨
+![](https://github.com/mintoug/projet-1....jpg)
 
-POZOS will give you information to build the API container
 
-- Base image
+# Infrastructure As Code : Second task answer
 
-To build API image you must use "python:2.7-stretch"
+Using docker-compose.
+first I delete my previous created container
 
-- Maintainer
-
-Please don't forget to specify the maintainer information
-
-- Add the source code
-
-You need to copy the source code of the API in the container at the root "/" path
-
-- Prerequisite
-
-The API is using FLASK engine,  here is a list of the package you need to install
-```
-apt-get update -y && apt-get install python-dev python3-dev libsasl2-dev python-dev libldap2-dev libssl-dev -y
-pip install flask==1.1.2 flask_httpauth==4.1.0 flask_simpleldap python-dotenv==0.14.0
-```
-- Persistent data (volume)
-
-Create data folder at the root "/" where data will be stored and declare it as a volume
-
-You will use this folder to mount student list
-
-- API Port
-
-To interact with this API expose 5000 port
-
-- CMD
-
-When container start, it must run the student_age.py (copied at step 4), so it should be something like
-
-`CMD [ "python", "./student_age.py" ]`
-
-Build your image and try to run it (don't forget to mount *student_age.json* file at */data/student_age.json* in the container), check logs and verify that the container is listening and is  ready to answer
-
-Run this command to make sure that the API correctly responding (take a screenshot for delivery purpose)
-
-`curl -u toto:python -X GET http://<host IP>:<API exposed port>/pozos/api/v1.0/get_student_ages`
-
-**Congratulation! Now you are ready for the next step (docker-compose.yml)**
-
-## Infrastructure As Code (5 points)
-
-After testing your API image, you need to put all together and deploy it, using docker-compose.
-
-The ***docker-compose.yml*** file will deploy two services :
+As asked The ***docker-compose.yml*** file will deploy two services :
 
 - website: the end-user interface with the following characteristics
    - image: php:apache
@@ -141,40 +106,54 @@ The ***docker-compose.yml*** file will deploy two services :
    - volumes: You will mount student_age.json file in /data/student_age.json
    - port: don't forget to expose the port
 
-Delete your previous created container
+my docker-compose.yml is 
+`version: '2'
+services:
+  website:
+    image: php:apache
+    depends_on:
+      - api
+    ports:
+      - "3001:80"
+    volumes:
+      - ./website:/var/www/html
+    environment:
+      - USER_NAME=toto
+      - PASSWORD=python
+    networks:
+      - api_pozos
+  api:
+    image: api-student:v1
+    ports:
+      - "3000:5000"
+    volumes:
+      - ./simple_api/student_age.json:/data/student_age.json
+    networks:
+      - api_pozos
+networks:
+  api_pozos:`   
 
-Run your docker-compose.yml
+I Rrun your docker-compose.yml `docker-compose up `
 
-Finally, reach your website and click on the bouton "List Student"
 
-**If the list of the student appears, you are successfully dockerizing the POZOS application! Congratulation (make a screenshot)**
 
 ## Docker Registry (4 points)
 
-POZOS need you to deploy a private registry and store the built images
+POZOS need me to deploy a private registry and store the built images
 
 So you need to deploy :
 
 - a docker [registry](https://docs.docker.com/registry/ "registry")
 - a web [interface](https://hub.docker.com/r/joxit/docker-registry-ui/ "interface") to see the pushed image as a container
+   ### to do that 
+for the docker registry : i Run 
+`docker run -d -p 5000:5000 --name registry-pozos --network student-list_api_pozos registry:2`
 
-Or you can use [Portus](http://port.us.org/ "Portus") to run both
+next the tag  `docker image tag api-student:v1 localhost:5000/api-student:v1`
 
-Don't forget to push your image on your private registry and show them in your delivery.
+next pushing the image to the container registry-pozos `docker push localhost:5000/api-student:v1`
 
-## Delivery (4 points)
+for the UI I use 
+`docker run -d --name registry_anissa_ui --network student-list_api_pozos -p 4002:80 -e REGISTRY_TITLE="registry pozos" -e REGISTRY_URL="http://registry-pozos:5000" joxit/docker-registry-ui:static`
 
-Your delivery must be zip named firstname.zip (replace firstname by your own) that contain:
 
-- A doc or PDF file with your screenshots and explanations.
-- Configuration files used to realize the graded exercise (docker-compose.yml and Dockerfile).
-
-Your delivery will be evaluated on:
-
-- Explanations quality
-- Screenshots quality (relevance, visibility)
-- Presentation quality
-
-Send your delivery at ***eazytrainingfr@gmail.com*** and we will provide you the link of the solution.
-
-![good luck](https://user-images.githubusercontent.com/18481009/84582398-cad38100-adeb-11ea-95e3-2a9d4c0d5437.gif)
